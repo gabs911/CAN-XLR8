@@ -9,23 +9,32 @@
 
 MCP_CAN CAN0(CS_PIN);  
 
-void intToBytes(unsigned long long integer, unsigned char *data, unsigned short data_length)
+void intToBytes(unsigned long long int_value, unsigned char *data)
 {
-  for (int i = 0; i < data_length; i++)
-    data[(data_length-1) - i] = (integer >> (i * 8)) & 0xFF;
+  for (int i = 0; i < sizeof(int_value); i++)
+    data[i] = (int_value >> (i * 8)) & 0xFF;
+}
+
+int bytesToInt(unsigned char *data, unsigned short data_len)
+{
+  int output = 0;
+  for (int i = 0; i < data_len; i++)
+    output = (data[i] << (i * 8)) | output;
+  return output;
 }
 
 void speed_command()
 {
   int identifier = 0x010;
   unsigned char data[DATA_LENGTH] = {'0','0','0','0','0','0','0','0'};
-  
   unsigned short encoderValue = analogRead(ENCODER_PIN);
-//Serial.println(String(encoderValue));
 
-  intToBytes(encoderValue, data, DATA_LENGTH);
-//for(int i=0;i<DATA_LENGTH;i++)
-//Serial.println(data[i],HEX); 
+  intToBytes(encoderValue, data);
+ // for(int i=0;i<DATA_LENGTH;i++)
+ //   Serial.print(data[i]);
+ // Serial.println();
+  Serial.println(bytesToInt(data,DATA_LENGTH)); 
+  
     
   // send Standard CAN Frame
   byte sndStat = CAN0.sendMsgBuf(identifier, 0, DATA_LENGTH,data);
