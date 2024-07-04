@@ -1,5 +1,6 @@
 #include <mcp_can.h>
 #include <SPI.h>
+#include <Adafruit_ADS1X15.h>
 
 #define CS_PIN                  5 
 #define ENCODER_PIN            34
@@ -8,6 +9,7 @@
 #define NO_MESSAGE_ID        9999
 
 MCP_CAN CAN0(CS_PIN);  
+Adafruit_ADS1115 ads;
 
 void intToBytes(unsigned long long int_value, unsigned char *data)
 {
@@ -27,11 +29,11 @@ void speed_command()
 {
   int identifier = 0x010;
   unsigned char data[DATA_LENGTH] = {'0','0','0','0','0','0','0','0'};
-  unsigned short encoderValue = analogRead(ENCODER_PIN);
+  unsigned short encoderValue = ads.readADC_SingleEnded(0);
 
   intToBytes(encoderValue, data);
- // for(int i=0;i<DATA_LENGTH;i++)
- //   Serial.print(data[i]);
+  //for(int i=0;i<DATA_LENGTH;i++)
+  //  Serial.print(data[i]);
  // Serial.println();
   Serial.println(bytesToInt(data,DATA_LENGTH)); 
   
@@ -61,7 +63,6 @@ void receive_messages()
       // sprintf(msgString, " 0x%.2X", rxBuf[i]);
       Serial.print(rxBuf[i],HEX);
       Serial.print(" ");
-      //  Serial.print(" ");
     }
     Serial.println();
   }
@@ -70,6 +71,9 @@ void receive_messages()
 void setup()
 {
   Serial.begin(115200);
+  
+  if(!ads.begin())
+    Serial.println("Error Initializing ADS1115..."); 
 
   if(CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK)
     Serial.println("MCP2515 Initialized Successfully!");
@@ -84,5 +88,5 @@ void loop()
 {
   receive_messages();
   speed_command();
-  delay(1000);   // send data per 100ms
+  delay(10);   // send data per 100ms
 }
